@@ -6,15 +6,18 @@ import { IdeaModule } from './idea/idea.module';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { HttpErrorFilter } from './shared/http-error.filter';
 import { LoggingInterceptor } from './shared/logging.interceptor';
+import { UserModule } from './user/user.module';
 @Module({
   imports: [
     IdeaModule,
-    MongooseModule.forRoot('mongodb://localhost:27017/shop',
+    UserModule,
+    MongooseModule.forRoot(process.env.MONGO_URI,
       {
         useUnifiedTopology: true,
         useNewUrlParser: true
       }
-    )
+    ),
+    UserModule
   ],
   controllers: [AppController],
   providers: [

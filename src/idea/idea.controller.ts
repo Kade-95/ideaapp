@@ -1,9 +1,9 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, UsePipes } from "@nestjs/common";
-import { Idea, IdeaDTO } from "./idea.dto";
+import { Idea } from "./idea.model";
 import { IdeaService } from "./idea.service";
 import { ValidationPipe } from "../shared/validation.pipe";
 
-@Controller('ideas')
+@Controller('api/ideas')
 export class IdeaController {
     constructor(private ideaService: IdeaService) { }
 
@@ -15,7 +15,7 @@ export class IdeaController {
 
     @Post()
     @UsePipes(new ValidationPipe())
-    async createIdea(@Body() data: IdeaDTO) {
+    async createIdea(@Body() data: Idea) {
         const result = await this.ideaService.create(data);
         return result;
     }
@@ -28,7 +28,7 @@ export class IdeaController {
 
     @Put(':id')
     @UsePipes(new ValidationPipe())
-    async updateIdea(@Param('id') id: string, @Body() data: Partial<IdeaDTO>) {
+    async updateIdea(@Param('id') id: string, @Body() data: Partial<Idea>) {
         const result = await this.ideaService.update(id, data);
         return result;
     }

@@ -18,6 +18,6 @@ export class HttpErrorFilter implements ExceptionFilter {
 
         Logger.error(`${request.method} ${request.url}`, JSON.stringify(errorResponse), 'ExceptionFilter');
 
-        response.status(status).json(errorResponse);
+        response.status(405).json(errorResponse);
     }
 }
