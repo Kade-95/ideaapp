@@ -18,7 +18,7 @@ export class UserService {
     async getAll(): Promise<UserRO[]> {
         const result = await this.userModel.find();
         if (result.length == 0) throw new HttpException("Users not found", HttpStatus.NOT_FOUND);
-        return result.map(user => this.toResponseObject(user, false));
+        return result.map(user => this.sanitize(user, false));
     }
 
     async login(data: User): Promise<UserRO> {
@@ -26,9 +26,9 @@ export class UserService {
         const user = await this.userModel.findOne({ username });
         if (!user || !await bcrypt.compare(password, user.password)) {
             throw new HttpException("Invalid username/password", HttpStatus.BAD_REQUEST);
-        }        
+        }
 
-        return this.toResponseObject(user);
+        return this.sanitize(user);
     }
 
     async register(data: User): Promise<UserRO> {
@@ -42,14 +42,14 @@ export class UserService {
             user = await this.userModel.create(data);
             const saved = await user.save();
 
-            return this.toResponseObject(saved);
+            return this.sanitize(saved);
         } catch (error) {
             throw new HttpException('Bad request', HttpStatus.BAD_REQUEST);
         }
     }
 
     async read(id: string): Promise<UserRO> {
-        return this.toResponseObject(await this.findUser(id));
+        return this.sanitize(await this.findUser(id));
     }
 
     async findUser(id: string) {
@@ -62,7 +62,7 @@ export class UserService {
         }
     }
 
-    toResponseObject(user: User, showToken: boolean = true): UserRO {
+    sanitize(user: User, showToken: boolean = true): UserRO {
         const { created, username } = user;
         const response: UserRO = { created, username, id: user['_id'] };
 
