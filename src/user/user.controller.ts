@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UsePipes } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UsePipes } from '@nestjs/common';
 import { ValidationPipe } from 'src/shared/validation.pipe';
 import { User } from './user.model';
 import { UserService } from './user.service';
@@ -8,8 +8,8 @@ export class UserController {
 
     constructor(private userService: UserService) { }
     @Get('api/users')
-    async getAllUsers() {
-        return await this.userService.getAll();
+    async getAllUsers(@Query('page') page: number = 1) {
+        return await this.userService.getAll(page);
     }
 
     @Get('api/users/:id')

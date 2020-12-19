@@ -1,11 +1,9 @@
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Model } from "mongoose";
+import { Model, Types } from "mongoose";
 import { Idea, IdeaModel, IdeaRO } from "./idea.model";
-import * as mongoose from "mongoose";
-import { UserRO } from "src/user/user.model";
 import { Votes } from "src/shared/vote.enum";
-const ObjectId = mongoose.Types.ObjectId;
+const ObjectId = Types.ObjectId;
 
 @Injectable()
 export class IdeaService {
@@ -64,7 +62,14 @@ export class IdeaService {
         return await this.read(idea.id);
     }
 
-    async getAll() {
+    async getAll(page: number = 1, newest: boolean = false) {
+        const sort: any = [
+            { $skip: 25 * (page - 1) },
+            { $limit: 25 }
+        ];
+
+        if (newest) sort.unshift({ $sort: { created: 1 } });
+
         const result = await this.ideaModel.aggregate([
             { $project: { __v: 0 } },
             {
@@ -77,15 +82,24 @@ export class IdeaService {
             },
             {
                 $unwind: "$author"
-            }
+            },
+            {
+                $lookup: {
+                    from: 'comments',
+                    localField: '_id',
+                    foreignField: 'idea',
+                    as: 'comments'
+                }
+            },
+            ...sort
         ]);
 
         if (result.length == 0) throw new HttpException("Ideas not found", HttpStatus.NOT_FOUND);
-        return result.map(idea => new IdeaRO(idea as Idea, { author: idea.author }));
+        return result.map(idea => new IdeaRO(idea as Idea, { author: idea.author, comments: idea.comments }));
     }
 
     async create(userId: string, data: Idea) {
-        data.author = mongoose.Types.ObjectId(userId);
+        data.author = new ObjectId(userId);
 
         const idea = await this.ideaModel.create(data);
         const saved = await idea.save();

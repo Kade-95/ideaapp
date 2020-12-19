@@ -38,7 +38,7 @@ export class UserRO {
     public username: string;
     public created: Date;
     public token?: string;
-    public ideas?: IdeaRO[];
+    public ideas?: Partial<IdeaRO>[];
 
     constructor(user: User, get: any = {}, set: any = {}) {
         this.id = user['_id'].toString();
@@ -56,6 +56,15 @@ export class UserRO {
 
         for (let i in set) {
             this[i] = set[i];
+        }
+
+        if (this.ideas) {
+            for (let i in this.ideas) {
+                if (this.ideas[i].constructor !== IdeaRO) {
+                    const { _id, title, created } = this.ideas[i] as any;
+                    this.ideas[i] = { id: _id.toString(), title, created };
+                }
+            }
         }
     }
 }

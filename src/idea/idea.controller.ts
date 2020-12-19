@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards, UsePipes } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards, UsePipes } from "@nestjs/common";
 import { Idea } from "./idea.model";
 import { IdeaService } from "./idea.service";
 import { ValidationPipe } from "../shared/validation.pipe";
@@ -10,8 +10,14 @@ export class IdeaController {
     constructor(private ideaService: IdeaService) { }
 
     @Get()
-    async getAllIdeas() {
-        const result = await this.ideaService.getAll();
+    async getAllIdeas(@Query('page') page: number = 1) {
+        const result = await this.ideaService.getAll(page);
+        return result;
+    }
+
+    @Get('/newest')
+    async getNewest(@Query('page') page: number = 1) {
+        const result = await this.ideaService.getAll(page, true);
         return result;
     }
 
@@ -60,11 +66,11 @@ export class IdeaController {
     @UseGuards(new AuthGaurd())
     async upvoteIdea(@Param('id') id: string, @UserSession('id') userId: string) {
         return this.ideaService.upvote(id, userId);
-     }
+    }
 
     @Post(':id/downvote')
     @UseGuards(new AuthGaurd())
-    async downvoteIdea(@Param('id') id: string, @UserSession('id') userId: string) { 
+    async downvoteIdea(@Param('id') id: string, @UserSession('id') userId: string) {
         return this.ideaService.downvote(id, userId);
     }
 }

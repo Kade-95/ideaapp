@@ -1,5 +1,6 @@
 import { IsNotEmpty, IsString } from 'class-validator';
 import * as mongoose from 'mongoose';
+import { CommentRO } from 'src/comment/comment.model';
 import { UserRO } from 'src/user/user.model';
 
 export class Idea {
@@ -72,6 +73,7 @@ export class IdeaRO {
     public upvotes?: number;
     public downvotes?: number;
     public bookmarkedBy?: number;
+    public comments?: CommentRO[];
 
     constructor(idea: Idea, set?: any) {
         this.id = idea['_id'].toString();
@@ -88,7 +90,7 @@ export class IdeaRO {
             this.downvotes = idea.downvoters.length;
         }
 
-        if(idea.bookmarkers){
+        if (idea.bookmarkers) {
             this.bookmarkedBy = idea.bookmarkers.length;
         }
 
@@ -101,6 +103,12 @@ export class IdeaRO {
         if (this.author && this.author.constructor !== UserRO) {
             const { _id, username, created } = this.author as any;
             this.author = { id: _id.toString(), username, created };
+        }
+
+        if (this.comments && Array.isArray(this.comments)) {
+            this.comments = this.comments.map(comment => {
+                return comment.constructor === CommentRO ? comment : { id: comment['_id'].toString(), comment: comment.comment, author: comment.author } as CommentRO
+            });
         }
     }
 }

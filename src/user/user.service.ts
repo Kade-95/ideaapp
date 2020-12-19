@@ -1,9 +1,10 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, mongo } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { User, UserModel, UserRO } from './user.model';
 import * as bcrypt from "bcryptjs";
 
+const ObjectId = Types.ObjectId;
 @Injectable()
 export class UserService {
     constructor(
@@ -11,11 +12,35 @@ export class UserService {
         private readonly userModel: Model<UserModel>
     ) { }
 
-    async getAll(): Promise<UserRO[]> {
-        const result = await this.userModel.find();
+    async getAll(page: number = 1): Promise<UserRO[]> {
+        const found: any[] = await this.userModel.aggregate([
+            { $project: { __v: 0 } },
+            {
+                $lookup: {
+                    from: 'ideas',
+                    localField: '_id',
+                    foreignField: 'author',
+                    as: 'ideas'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'ideas',
+                    localField: '_id',
+                    foreignField: 'bookmarkers',
+                    as: 'bookmarks'
+                }
+            },
+            { $skip: 25 * (page - 1) },
+            { $limit: 25 },
+        ]);
 
-        if (result.length == 0) throw new HttpException("Users not found", HttpStatus.NOT_FOUND);
-        return result.map(user => new UserRO(user));
+        if (found.length == 0) throw new HttpException("Users not found", HttpStatus.NOT_FOUND);
+
+        return found.map(user => new UserRO(user,
+            {},
+            { bookmarks: user.bookmarks, ideas: user.ideas }
+        ));
     }
 
     async login(data: User): Promise<UserRO> {
@@ -47,7 +72,7 @@ export class UserService {
     async read(id: string): Promise<UserRO> {
         const found: any[] = await this.userModel.aggregate([
             { $project: { __v: 0 } },
-            { $match: { _id: new mongo.ObjectId(id) } },
+            { $match: { _id: new ObjectId(id) } },
             {
                 $lookup: {
                     from: 'ideas',
